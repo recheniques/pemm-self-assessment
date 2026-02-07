@@ -1,7 +1,10 @@
 {
-  "buildCommand": "pnpm build",
+  "buildCommand": "pnpm build && echo 'Build complete'",
   "outputDirectory": "dist/public",
   "framework": "vite",
+  "env": {
+    "NODE_ENV": "production"
+  },
   "rewrites": [
     {
       "source": "/(.*)",

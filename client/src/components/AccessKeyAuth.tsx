@@ -17,22 +17,17 @@ export function AccessKeyAuth({ onAuthenticated }: AccessKeyAuthProps) {
     setError('');
     setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/verify-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: accessKey })
-      });
+    // Simular delay de verificacion
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (response.ok) {
-        localStorage.setItem('pemm_access_key', accessKey);
-        onAuthenticated();
-      } else {
-        setError('Clave de acceso invalida. Verifica que sea correcta.');
-      }
-    } catch (err) {
-      setError('Error al verificar la clave. Intenta de nuevo.');
-    } finally {
+    // Clave provisoria para testing
+    const VALID_KEY = 'PEMM2025TEST';
+
+    if (accessKey === VALID_KEY) {
+      localStorage.setItem('pemm_access_key', accessKey);
+      onAuthenticated();
+    } else {
+      setError('Clave de acceso invalida. Intenta con: PEMM2025TEST');
       setIsLoading(false);
     }
   };

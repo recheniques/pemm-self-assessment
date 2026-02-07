@@ -16,13 +16,16 @@ export default function Home() {
   const [userEmail, setUserEmail] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const radarRef = useRef<HTMLDivElement>(null);
 
   const currentQuestion = ASSESSMENT_QUESTIONS[currentQuestionIndex];
-  const currentAnswer = assessment.responses.get(currentQuestion.id);
+  const currentAnswer = assessment.responses.get(currentQuestion?.id);
 
   const handleAnswer = (value: number) => {
-    assessment.addResponse(currentQuestion.id, value);
+    if (currentQuestion) {
+      assessment.addResponse(currentQuestion.id, value);
+    }
   };
 
   const handleNext = () => {
@@ -65,9 +68,18 @@ export default function Home() {
     setShowResults(false);
     setUserName('');
     setUserEmail('');
+    setHasStarted(false);
   };
 
-  if (assessment.answeredQuestions === 0 && !showResults) {
+  const handleStartAssessment = () => {
+    if (userName.trim()) {
+      setHasStarted(true);
+      setCurrentQuestionIndex(0);
+    }
+  };
+
+  // Initial screen - User info
+  if (!hasStarted && !showResults) {
     return (
       <div className="min-h-screen bg-editorial-sand flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl p-12 bg-white">
@@ -120,11 +132,7 @@ export default function Home() {
             </div>
 
             <Button
-              onClick={() => {
-                if (userName.trim()) {
-                  handleNext();
-                }
-              }}
+              onClick={handleStartAssessment}
               disabled={!userName.trim()}
               className="w-full bg-executive-forest hover:bg-executive-forest/90 text-white py-3 rounded-lg font-semibold"
             >
@@ -136,7 +144,8 @@ export default function Home() {
     );
   }
 
-  if (!showResults) {
+  // Assessment screen
+  if (hasStarted && !showResults && currentQuestion) {
     return (
       <div className="min-h-screen bg-editorial-sand p-4 md:p-8">
         <div className="max-w-3xl mx-auto space-y-8">
@@ -146,7 +155,7 @@ export default function Home() {
             </h1>
           </div>
 
-          <ProgressBar current={assessment.answeredQuestions} total={assessment.totalQuestions} />
+          <ProgressBar current={currentQuestionIndex + 1} total={ASSESSMENT_QUESTIONS.length} />
 
           <QuestionCard
             question={currentQuestion}
@@ -187,6 +196,7 @@ export default function Home() {
     );
   }
 
+  // Results screen
   if (showResults && assessment.result) {
     const radarData = [
       { name: 'Infraestructura', value: assessment.result.infrastructure },

@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AssessmentResult } from './types';
+import { AREA_EXPLANATIONS, PROTOCOLS_BY_LEVEL } from './reportContent';
 
 export async function generatePEMMReport(
   result: AssessmentResult,
@@ -15,92 +16,215 @@ export async function generatePEMMReport(
 
   const pageHeight = pdf.internal.pageSize.getHeight();
   const pageWidth = pdf.internal.pageSize.getWidth();
-  let yPosition = 20;
+  const margin = 20;
+  const contentWidth = pageWidth - 2 * margin;
 
-  // Set fonts
-  const titleFont = 'Montserrat';
-  const bodyFont = 'Inter';
+  let yPosition = margin;
 
-  // Header
   pdf.setFontSize(10);
   pdf.setTextColor(26, 58, 50);
-  pdf.text('EXPERIENCE ASSET LABS', 20, yPosition);
-  yPosition += 10;
+  pdf.text('EXPERIENCE ASSET LABS', margin, yPosition);
+  yPosition += 8;
 
-  // Title
   pdf.setFontSize(24);
-  pdf.setFont(titleFont, 'bold');
-  pdf.text('PEMM: Prompt Engineering Maturity Model', 20, yPosition);
+  pdf.setFont('Montserrat', 'bold');
+  pdf.text('PEMM: Prompt Engineering Maturity Model', margin, yPosition);
   yPosition += 8;
 
   pdf.setFontSize(14);
-  pdf.setFont(titleFont, 'bold');
-  pdf.text('Diagnóstico de Madurez Operacional', 20, yPosition);
+  pdf.setFont('Montserrat', 'bold');
+  pdf.text('Diagnostico de Madurez Operacional', margin, yPosition);
   yPosition += 15;
 
-  // User Info
   pdf.setFontSize(11);
-  pdf.setFont(bodyFont, 'normal');
+  pdf.setFont('Inter', 'normal');
   pdf.setTextColor(44, 44, 44);
-  pdf.text(`Usuario: ${userName}`, 20, yPosition);
+  pdf.text(`Usuario: ${userName}`, margin, yPosition);
   yPosition += 6;
-  pdf.text(`Nivel de Madurez: ${result.level}`, 20, yPosition);
+  pdf.text(`Nivel de Madurez: ${result.level}`, margin, yPosition);
   yPosition += 6;
-  pdf.text(`Puntaje Total: ${result.totalScore}/50`, 20, yPosition);
+  pdf.text(`Puntaje Total: ${result.totalScore}/50`, margin, yPosition);
   yPosition += 15;
 
-  // Radar Chart
   if (radarChartElement) {
-    const canvas = await html2canvas(radarChartElement, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const imgWidth = 150;
-    const imgHeight = 120;
-    const xPosition = (pageWidth - imgWidth) / 2;
-    pdf.addImage(imgData, 'PNG', xPosition, yPosition, imgWidth, imgHeight);
-    yPosition += imgHeight + 10;
+    try {
+      const canvas = await html2canvas(radarChartElement, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 140;
+      const imgHeight = 110;
+      const xPosition = (pageWidth - imgWidth) / 2;
+      pdf.addImage(imgData, 'PNG', xPosition, yPosition, imgWidth, imgHeight);
+      yPosition += imgHeight + 10;
+    } catch (error) {
+      console.error('Error adding radar chart:', error);
+    }
   }
 
-  // Add new page for content
   pdf.addPage();
-  yPosition = 20;
+  yPosition = margin;
 
-  // Level Description
   pdf.setFontSize(14);
-  pdf.setFont(titleFont, 'bold');
+  pdf.setFont('Montserrat', 'bold');
   pdf.setTextColor(26, 58, 50);
-  pdf.text(`Nivel ${result.level}: Tu Diagnóstico`, 20, yPosition);
-  yPosition += 10;
-
-  // Weaknesses
-  pdf.setFontSize(12);
-  pdf.setFont(titleFont, 'bold');
-  pdf.setTextColor(44, 44, 44);
-  pdf.text('Áreas de Mayor Debilidad:', 20, yPosition);
+  pdf.text(`Nivel ${result.level}: Tu Diagnostico Detallado`, margin, yPosition);
   yPosition += 8;
 
-  pdf.setFontSize(10);
-  pdf.setFont(bodyFont, 'normal');
+  pdf.setFontSize(12);
+  pdf.setFont('Montserrat', 'bold');
+  pdf.setTextColor(44, 44, 44);
+  pdf.text('Areas de Mayor Debilidad:', margin, yPosition);
+  yPosition += 6;
+
   result.weaknesses.forEach((weakness, index) => {
-    pdf.text(`${index + 1}. ${weakness.label}: ${weakness.score.toFixed(1)}/5`, 25, yPosition);
-    yPosition += 6;
+    const areaKey = weakness.area as keyof typeof AREA_EXPLANATIONS;
+    const areaInfo = AREA_EXPLANATIONS[areaKey];
+
+    pdf.setFontSize(11);
+    pdf.setFont('Montserrat', 'bold');
+    pdf.setTextColor(26, 58, 50);
+    pdf.text(`${index + 1}. ${weakness.label}: ${weakness.score.toFixed(1)}/5`, margin, yPosition);
+    yPosition += 5;
+
+    pdf.setFontSize(8);
+    pdf.setFont('Inter', 'normal');
+    pdf.setTextColor(122, 122, 122);
+    
+    const definition = `Definicion: ${areaInfo.definition}`;
+    const wrappedDefinition = pdf.splitTextToSize(definition, contentWidth);
+    pdf.text(wrappedDefinition, margin + 5, yPosition);
+    yPosition += wrappedDefinition.length * 3.5 + 1;
+
+    pdf.setTextColor(200, 50, 50);
+    pdf.setFontSize(8);
+    pdf.text('Implicaciones:', margin + 5, yPosition);
+    yPosition += 3;
+
+    const maxImplications = Math.min(2, areaInfo.weaknessImplications.length);
+    for (let i = 0; i < maxImplications; i++) {
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(7.5);
+      const wrapped = pdf.splitTextToSize(`• ${areaInfo.weaknessImplications[i]}`, contentWidth - 5);
+      pdf.text(wrapped, margin + 8, yPosition);
+      yPosition += wrapped.length * 3 + 0.5;
+    }
+
+
+    if (yPosition > pageHeight - 20) {
+      pdf.addPage();
+      yPosition = margin;
+    }
   });
 
-  yPosition += 5;
+  yPosition += 3;
 
-  // Strengths
   pdf.setFontSize(12);
-  pdf.setFont(titleFont, 'bold');
+  pdf.setFont('Montserrat', 'bold');
   pdf.setTextColor(44, 44, 44);
-  pdf.text('Fortalezas Actuales:', 20, yPosition);
-  yPosition += 8;
+  pdf.text('Fortalezas Actuales:', margin, yPosition);
+  yPosition += 6;
 
-  pdf.setFontSize(10);
-  pdf.setFont(bodyFont, 'normal');
   result.strengths.forEach((strength, index) => {
-    pdf.text(`${index + 1}. ${strength.label}: ${strength.score.toFixed(1)}/5`, 25, yPosition);
-    yPosition += 6;
+    const areaKey = strength.area as keyof typeof AREA_EXPLANATIONS;
+    const areaInfo = AREA_EXPLANATIONS[areaKey];
+
+    pdf.setFontSize(11);
+    pdf.setFont('Montserrat', 'bold');
+    pdf.setTextColor(26, 58, 50);
+    pdf.text(`${index + 1}. ${strength.label}: ${strength.score.toFixed(1)}/5`, margin, yPosition);
+    yPosition += 5;
+
+    pdf.setFontSize(8);
+    pdf.setFont('Inter', 'normal');
+    pdf.setTextColor(122, 122, 122);
+    
+    const definition2 = `Definicion: ${areaInfo.definition}`;
+    const wrappedDefinition2 = pdf.splitTextToSize(definition2, contentWidth);
+    pdf.text(wrappedDefinition2, margin + 5, yPosition);
+    yPosition += wrappedDefinition2.length * 3.5 + 1;
+
+    pdf.setTextColor(26, 58, 50);
+    pdf.setFontSize(8);
+    pdf.text('Implicaciones:', margin + 5, yPosition);
+    yPosition += 3;
+
+    const maxStrengths = Math.min(2, areaInfo.strengthImplications.length);
+    for (let i = 0; i < maxStrengths; i++) {
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(7.5);
+      const wrapped = pdf.splitTextToSize(`• ${areaInfo.strengthImplications[i]}`, contentWidth - 5);
+      pdf.text(wrapped, margin + 8, yPosition);
+      yPosition += wrapped.length * 3 + 0.5;
+    }
+
+
+    if (yPosition > pageHeight - 20) {
+      pdf.addPage();
+      yPosition = margin;
+    }
   });
 
-  // Download
+  pdf.addPage();
+  yPosition = margin;
+
+  const protocol = PROTOCOLS_BY_LEVEL[result.level as keyof typeof PROTOCOLS_BY_LEVEL];
+
+  pdf.setFontSize(14);
+  pdf.setFont('Montserrat', 'bold');
+  pdf.setTextColor(26, 58, 50);
+  pdf.text(protocol.title, margin, yPosition);
+  yPosition += 7;
+
+  pdf.setFontSize(9);
+  pdf.setFont('Inter', 'normal');
+  pdf.setTextColor(100, 100, 100);
+  const wrappedDescription = pdf.splitTextToSize(protocol.description, contentWidth);
+  pdf.text(wrappedDescription, margin, yPosition);
+  yPosition += wrappedDescription.length * 3.5 + 5;
+
+  protocol.days.forEach((dayData) => {
+    if (yPosition > pageHeight - 25) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+
+    pdf.setFontSize(11);
+    pdf.setFont('Montserrat', 'bold');
+    pdf.setTextColor(26, 58, 50);
+    pdf.text(`Dia ${dayData.day}: ${dayData.title}`, margin, yPosition);
+    yPosition += 5;
+
+    pdf.setFontSize(8);
+    pdf.setFont('Inter', 'normal');
+    pdf.setTextColor(44, 44, 44);
+    pdf.text('Tareas:', margin + 3, yPosition);
+    yPosition += 3;
+
+    const maxTasks = Math.min(2, dayData.tasks.length);
+    for (let i = 0; i < maxTasks; i++) {
+      const wrapped = pdf.splitTextToSize(`• ${dayData.tasks[i]}`, contentWidth - 5);
+      pdf.text(wrapped, margin + 6, yPosition);
+      yPosition += wrapped.length * 2.8 + 0.5;
+    }
+
+    yPosition += 1;
+
+    pdf.setTextColor(26, 58, 50);
+    pdf.setFont('Inter', 'bold');
+    pdf.text('Entregable:', margin + 3, yPosition);
+    yPosition += 3;
+
+    pdf.setFont('Inter', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    const wrappedDeliverable = pdf.splitTextToSize(dayData.deliverable, contentWidth - 5);
+    pdf.text(wrappedDeliverable, margin + 6, yPosition);
+    yPosition += wrappedDeliverable.length * 2.8 + 1;
+
+    pdf.setTextColor(122, 122, 122);
+    pdf.setFontSize(7);
+    pdf.text(`Tiempo: ${dayData.timeEstimate}`, margin + 3, yPosition);
+    yPosition += 3;
+
+  });
+
   pdf.save(`PEMM-Assessment-${userName}-${new Date().toISOString().split('T')[0]}.pdf`);
 }

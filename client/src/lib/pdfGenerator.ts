@@ -6,7 +6,8 @@ import { AREA_EXPLANATIONS, PROTOCOLS_BY_LEVEL } from './reportContent';
 export async function generatePEMMReport(
   result: AssessmentResult,
   userName: string,
-  radarChartElement: HTMLElement
+  radarChartElement: HTMLElement,
+  isPremium: boolean = false
 ): Promise<void> {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -60,6 +61,52 @@ export async function generatePEMMReport(
     }
   }
 
+  // Si es Freemium, solo mostrar resumen básico
+  if (!isPremium) {
+    pdf.addPage();
+    yPosition = margin;
+
+    pdf.setFontSize(14);
+    pdf.setFont('Montserrat', 'bold');
+    pdf.setTextColor(26, 58, 50);
+    pdf.text('Acceso Freemium', margin, yPosition);
+    yPosition += 10;
+
+    pdf.setFontSize(10);
+    pdf.setFont('Inter', 'normal');
+    pdf.setTextColor(44, 44, 44);
+    const freemiumText = pdf.splitTextToSize(
+      'Este es tu diagnóstico básico. Para acceder al Protocolo de 7 Días personalizado y análisis detallado, actualiza a la versión Premium del PEMM Foundations Kit.',
+      contentWidth
+    );
+    pdf.text(freemiumText, margin, yPosition);
+    yPosition += freemiumText.length * 4 + 10;
+
+    pdf.setFontSize(11);
+    pdf.setFont('Montserrat', 'bold');
+    pdf.setTextColor(26, 58, 50);
+    pdf.text('Próximos Pasos:', margin, yPosition);
+    yPosition += 6;
+
+    pdf.setFontSize(9);
+    pdf.setFont('Inter', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    const steps = [
+      '1. Accede a PEMM Foundations Kit en Hotmart',
+      '2. Obtén tu clave de acceso Premium',
+      '3. Vuelve a realizar la evaluación con tu clave',
+      '4. Descarga el informe completo con protocolo'
+    ];
+    steps.forEach(step => {
+      pdf.text(step, margin + 5, yPosition);
+      yPosition += 5;
+    });
+
+    pdf.save(`PEMM-Assessment-${userName}-${new Date().toISOString().split('T')[0]}.pdf`);
+    return;
+  }
+
+  // Si es Premium, mostrar análisis detallado
   pdf.addPage();
   yPosition = margin;
 
@@ -181,7 +228,9 @@ export async function generatePEMMReport(
   pdf.text(wrappedDescription, margin, yPosition);
   yPosition += wrappedDescription.length * 3.5 + 5;
 
-  protocol.days.forEach((dayData) => {
+  // Protocolo solo para Premium
+  if (isPremium) {
+    protocol.days.forEach((dayData) => {
     if (yPosition > pageHeight - 25) {
       pdf.addPage();
       yPosition = margin;
@@ -224,7 +273,8 @@ export async function generatePEMMReport(
     pdf.text(`Tiempo: ${dayData.timeEstimate}`, margin + 3, yPosition);
     yPosition += 3;
 
-  });
+    });
+  }
 
   pdf.save(`PEMM-Assessment-${userName}-${new Date().toISOString().split('T')[0]}.pdf`);
 }

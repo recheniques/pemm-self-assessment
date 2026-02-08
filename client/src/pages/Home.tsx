@@ -53,7 +53,7 @@ export default function Home({ isPremium = false }: { isPremium?: boolean }) {
     try {
       const radarElement = radarRef.current;
       if (radarElement) {
-        await generatePEMMReport(assessment.result, userName || 'Usuario', radarElement);
+        await generatePEMMReport(assessment.result, userName || 'Usuario', radarElement, isPremium);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -304,22 +304,36 @@ export default function Home({ isPremium = false }: { isPremium?: boolean }) {
             </div>
           </Card>
 
-          <div className="flex gap-4">
-            <Button
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF}
-              className="flex-1 bg-executive-forest hover:bg-executive-forest/90 text-white flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              {isGeneratingPDF ? 'Generando PDF...' : 'Descargar Informe PDF'}
-            </Button>
+          <div className="flex gap-4 flex-col">
+            <div className="flex gap-4">
+              <Button
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex-1 bg-executive-forest hover:bg-executive-forest/90 text-white flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {isGeneratingPDF ? 'Generando PDF...' : 'Descargar Informe PDF'}
+              </Button>
+
+              <Button
+                onClick={handleReset}
+                variant="outline"
+                className="flex-1"
+              >
+                Nueva Evaluacion
+              </Button>
+            </div>
 
             <Button
-              onClick={handleReset}
+              onClick={() => {
+                localStorage.removeItem('pemm_access_type');
+                localStorage.removeItem('pemm_access_key');
+                window.location.reload();
+              }}
               variant="outline"
-              className="flex-1"
+              className="w-full text-xs"
             >
-              Nueva Evaluacion
+              Cambiar Tipo de Acceso
             </Button>
           </div>
         </div>

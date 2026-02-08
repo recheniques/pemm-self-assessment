@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { generatePEMMReport } from '@/lib/pdfGenerator';
 import { AlertCircle, Download } from 'lucide-react';
 
-export default function Home() {
+export default function Home({ isPremium = false }: { isPremium?: boolean }) {
   const assessment = useAssessment();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userName, setUserName] = useState('');
@@ -71,8 +71,35 @@ export default function Home() {
     setHasStarted(false);
   };
 
-  const handleStartAssessment = () => {
-    if (userName.trim()) {
+  const handleStartAssessment = async () => {
+    if (userName.trim() && userEmail.trim()) {
+      // Guardar en Airtable
+      try {
+        const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID || 'appQxZ1DUwfvu1Nbm';
+        const token = import.meta.env.VITE_AIRTABLE_TOKEN;
+        
+        if (token) {
+          await fetch(`https://api.airtable.com/v0/${baseId}/Usuarios`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              records: [{
+                fields: {
+                  'Nombre y Apellido': userName,
+                  'Email': userEmail,
+                  'Tipo': isPremium ? 'Premium' : 'Freemium'
+                }
+              }]
+            })
+          });
+        }
+      } catch (error) {
+        console.error('Error saving to Airtable:', error);
+      }
+      
       setHasStarted(true);
       setCurrentQuestionIndex(0);
     }
@@ -106,20 +133,20 @@ export default function Home() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-carbon-ink mb-2">
-                  Tu Nombre (Requerido)
+                  Nombre y Apellido (Requerido)
                 </label>
                 <input
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Ej: Juan Garcia"
+                  placeholder="Ej: Juan García"
                   className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-executive-forest"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-carbon-ink mb-2">
-                  Tu Email (Opcional)
+                  Email (Requerido)
                 </label>
                 <input
                   type="email"
@@ -133,7 +160,7 @@ export default function Home() {
 
             <Button
               onClick={handleStartAssessment}
-              disabled={!userName.trim()}
+              disabled={!userName.trim() || !userEmail.trim()}
               className="w-full bg-executive-forest hover:bg-executive-forest/90 text-white py-3 rounded-lg font-semibold"
             >
               Comenzar Evaluacion

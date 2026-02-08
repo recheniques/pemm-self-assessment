@@ -8,10 +8,10 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import { AccessKeyAuth } from "./components/AccessKeyAuth";
 
-function Router() {
+function Router({ isPremium }: { isPremium: boolean }) {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path={"/"} component={() => <Home isPremium={isPremium} />} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -20,12 +20,14 @@ function Router() {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('pemm_access_key');
-    if (savedKey) {
+    const accessType = localStorage.getItem('pemm_access_type');
+    if (accessType) {
       setIsAuthenticated(true);
+      setIsPremium(accessType === 'premium');
     }
     setIsLoading(false);
   }, []);
@@ -42,7 +44,10 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return <AccessKeyAuth onAuthenticated={() => setIsAuthenticated(true)} />;
+    return <AccessKeyAuth onAuthenticated={(premium) => {
+      setIsAuthenticated(true);
+      setIsPremium(premium);
+    }} />;
   }
 
   return (
@@ -50,7 +55,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <Router isPremium={isPremium} />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

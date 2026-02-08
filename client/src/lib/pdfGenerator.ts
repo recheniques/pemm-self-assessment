@@ -51,8 +51,8 @@ export async function generatePEMMReport(
     try {
       const canvas = await html2canvas(radarChartElement, { scale: 2 });
       const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 140;
-      const imgHeight = 110;
+      const imgWidth = 280;
+      const imgHeight = 220;
       const xPosition = (pageWidth - imgWidth) / 2;
       pdf.addImage(imgData, 'PNG', xPosition, yPosition, imgWidth, imgHeight);
       yPosition += imgHeight + 10;
@@ -145,6 +145,7 @@ export async function generatePEMMReport(
     pdf.setFontSize(8);
     pdf.text('Implicaciones:', margin + 5, yPosition);
     yPosition += 3;
+    yPosition += 2;
 
     const maxImplications = Math.min(2, areaInfo.weaknessImplications.length);
     for (let i = 0; i < maxImplications; i++) {
@@ -155,6 +156,7 @@ export async function generatePEMMReport(
       yPosition += wrapped.length * 3 + 0.5;
     }
 
+    yPosition += 3;
 
     if (yPosition > pageHeight - 20) {
       pdf.addPage();
@@ -162,7 +164,7 @@ export async function generatePEMMReport(
     }
   });
 
-  yPosition += 3;
+  yPosition += 5;
 
   pdf.setFontSize(12);
   pdf.setFont('Montserrat', 'bold');
@@ -193,6 +195,7 @@ export async function generatePEMMReport(
     pdf.setFontSize(8);
     pdf.text('Implicaciones:', margin + 5, yPosition);
     yPosition += 3;
+    yPosition += 2;
 
     const maxStrengths = Math.min(2, areaInfo.strengthImplications.length);
     for (let i = 0; i < maxStrengths; i++) {
@@ -203,6 +206,7 @@ export async function generatePEMMReport(
       yPosition += wrapped.length * 3 + 0.5;
     }
 
+    yPosition += 3;
 
     if (yPosition > pageHeight - 20) {
       pdf.addPage();
@@ -231,48 +235,48 @@ export async function generatePEMMReport(
   // Protocolo solo para Premium
   if (isPremium) {
     protocol.days.forEach((dayData) => {
-    if (yPosition > pageHeight - 25) {
-      pdf.addPage();
-      yPosition = margin;
-    }
+      if (yPosition > pageHeight - 25) {
+        pdf.addPage();
+        yPosition = margin;
+      }
 
-    pdf.setFontSize(11);
-    pdf.setFont('Montserrat', 'bold');
-    pdf.setTextColor(26, 58, 50);
-    pdf.text(`Dia ${dayData.day}: ${dayData.title}`, margin, yPosition);
-    yPosition += 5;
+      pdf.setFontSize(11);
+      pdf.setFont('Montserrat', 'bold');
+      pdf.setTextColor(26, 58, 50);
+      pdf.text(`Día ${dayData.day}: ${dayData.title}`, margin, yPosition);
+      yPosition += 5;
 
-    pdf.setFontSize(8);
-    pdf.setFont('Inter', 'normal');
-    pdf.setTextColor(44, 44, 44);
-    pdf.text('Tareas:', margin + 3, yPosition);
-    yPosition += 3;
+      pdf.setFontSize(8);
+      pdf.setFont('Inter', 'normal');
+      pdf.setTextColor(44, 44, 44);
+      pdf.text('Tareas:', margin + 3, yPosition);
+      yPosition += 3;
 
-    const maxTasks = Math.min(2, dayData.tasks.length);
-    for (let i = 0; i < maxTasks; i++) {
-      const wrapped = pdf.splitTextToSize(`• ${dayData.tasks[i]}`, contentWidth - 5);
-      pdf.text(wrapped, margin + 6, yPosition);
-      yPosition += wrapped.length * 2.8 + 0.5;
-    }
+      const maxTasks = Math.min(2, dayData.tasks.length);
+      for (let i = 0; i < maxTasks; i++) {
+        const wrapped = pdf.splitTextToSize(`• ${dayData.tasks[i]}`, contentWidth - 5);
+        pdf.text(wrapped, margin + 6, yPosition);
+        yPosition += wrapped.length * 2.8 + 0.5;
+      }
 
-    yPosition += 1;
+      yPosition += 1;
 
-    pdf.setTextColor(26, 58, 50);
-    pdf.setFont('Inter', 'bold');
-    pdf.text('Entregable:', margin + 3, yPosition);
-    yPosition += 3;
+      pdf.setTextColor(26, 58, 50);
+      pdf.setFont('Inter', 'bold');
+      pdf.text('Entregable:', margin + 3, yPosition);
+      yPosition += 3;
 
-    pdf.setFont('Inter', 'normal');
-    pdf.setTextColor(100, 100, 100);
-    const wrappedDeliverable = pdf.splitTextToSize(dayData.deliverable, contentWidth - 5);
-    pdf.text(wrappedDeliverable, margin + 6, yPosition);
-    yPosition += wrappedDeliverable.length * 2.8 + 1;
+      pdf.setFont('Inter', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      const wrappedDeliverable = pdf.splitTextToSize(dayData.deliverable, contentWidth - 5);
+      pdf.text(wrappedDeliverable, margin + 6, yPosition);
+      yPosition += wrappedDeliverable.length * 2.8 + 1;
 
-    pdf.setTextColor(122, 122, 122);
-    pdf.setFontSize(7);
-    pdf.text(`Tiempo: ${dayData.timeEstimate}`, margin + 3, yPosition);
-    yPosition += 3;
-
+      pdf.setTextColor(122, 122, 122);
+      pdf.setFontSize(7);
+      pdf.text(`Tiempo: ${dayData.timeEstimate}`, margin + 3, yPosition);
+      yPosition += 3;
+      yPosition += 3;
     });
   }
 

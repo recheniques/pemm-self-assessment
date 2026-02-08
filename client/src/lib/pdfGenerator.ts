@@ -76,7 +76,7 @@ export async function generatePEMMReport(
     pdf.setFont('Inter', 'normal');
     pdf.setTextColor(44, 44, 44);
     const freemiumText = pdf.splitTextToSize(
-      'Este es tu diagnóstico básico. Para acceder al Protocolo de 7 Días personalizado y análisis detallado, actualiza a la versión Premium del PEMM Foundations Kit.',
+      'Este es tu diagnóstico básico. Para acceder al Nivel 2 —que incluye tu "Diagnóstico Detallado" con áreas de mayores debilidades y fortalezas (más sus implicaciones), y el "Protocolo de 7 Días" personalizado con tareas y entregables sugeridos— actualiza a la versión Premium del "PEMM Foundations Kit".',
       contentWidth
     );
     pdf.text(freemiumText, margin, yPosition);

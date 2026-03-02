@@ -28,7 +28,7 @@ export function AccessKeyAuth({ onAuthenticated }: AccessKeyAuthProps) {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Clave única para Premium
-    const PREMIUM_KEY = 'PEMM2025PREMIUM';
+    const PREMIUM_KEY = 'PEMM-DIAGNOSTICO';
 
     if (accessKey === PREMIUM_KEY) {
       localStorage.setItem('pemm_access_type', 'premium');
